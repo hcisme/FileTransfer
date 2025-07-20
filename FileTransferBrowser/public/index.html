@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="./index.css">
+  <title>跨设备文件传输系统</title>
+</head>
+
+<body>
+  <div class="container">
+    <header>
+      <h1>跨设备文件传输系统</h1>
+      <p class="subtitle">选择设备后即可上传文件</p>
+    </header>
+
+    <div class="main-content">
+      <div class="panel">
+        <div class="panel-title">
+          <i>📱</i>
+          <h2>设备选择</h2>
+        </div>
+
+        <div class="buttons">
+          <button id="scanBtn" class="btn" onclick="scanDevices()">
+            <i>🔍</i> 扫描可用设备
+          </button>
+          <button id="uploadBtn" class="btn" onclick="uploadFiles()">
+            <i>📤</i> 上传文件
+          </button>
+        </div>
+
+        <div class="status" id="status"></div>
+
+        <div id="deviceContainer" class="device-grid">
+          <!-- 设备列表将由JS动态填充 -->
+        </div>
+
+        <div id="selectedDeviceInfo" class="selected-device-info">
+          <!-- 已选设备信息将在这里显示 -->
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">
+          <i>📁</i>
+          <h2>文件选择</h2>
+        </div>
+
+        <label for="fileInput" class="file-label">
+          <div style="font-size: 50px; margin-bottom: 10px;">📂</div>
+          <h3>点击选择文件或拖放到此处</h3>
+          <p>支持多选文件上传</p>
+        </label>
+        <input type="file" id="fileInput" multiple />
+      </div>
+    </div>
+
+    <footer>
+      <p>跨设备文件传输系统 | 安全可靠的文件传输解决方案</p>
+    </footer>
+  </div>
+
+  <script src="./index.js"></script>
+</body>
+
+</html>
