@@ -48,7 +48,7 @@ class UploadViewModel(application: Application) : AndroidViewModel(application) 
         isUploading = true
 
         uploadFiles(
-            onProgress = { progress -> uploadProgress = progress },
+            onProgress = { progress -> uploadProgress = "%.2f".format(progress).toFloat() },
             onComplete = { text ->
                 isUploading = false
                 uploadProgress = 0f
@@ -56,7 +56,6 @@ class UploadViewModel(application: Application) : AndroidViewModel(application) 
                 showToast(text)
             }
         )
-
     }
 
     private fun uploadFiles(
@@ -64,22 +63,18 @@ class UploadViewModel(application: Application) : AndroidViewModel(application) 
         onComplete: (message: String) -> Unit
     ) {
         val service = selectedService!!
-        val ip = service
-            .inetAddresses
-            .firstOrNull { it is Inet4Address }
-            ?.hostAddress
-            ?: return
+        val ip = service.inetAddresses.firstOrNull { it is Inet4Address }?.hostAddress ?: return
         val url = "http://$ip:${service.port}/upload"
 
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val resolver = getApplication<Application>().contentResolver
+                val fileSizes = calcFileListSize()
 
-                // 1. 构建 MultipartBody（只放文件流，不做进度）
                 val multipartBody = MultipartBody.Builder()
                     .setType(MultipartBody.FORM)
                     .apply {
-                        selectedFiles.forEach { uri ->
+                        selectedFiles.forEachIndexed { index, uri ->
                             // 文件名
                             val cursor = resolver.query(
                                 uri,
@@ -97,6 +92,7 @@ class UploadViewModel(application: Application) : AndroidViewModel(application) 
                             // 用 InputStream 流包裹 RequestBody
                             val streamBody = object : RequestBody() {
                                 override fun contentType() = mediaType
+                                override fun contentLength() = fileSizes[index]
                                 override fun writeTo(sink: BufferedSink) {
                                     resolver.openInputStream(uri)?.use { input ->
                                         input.source().use { source ->
@@ -111,20 +107,19 @@ class UploadViewModel(application: Application) : AndroidViewModel(application) 
                     }
                     .build()
 
-                // 2. 用 ForwardingSink 包装，拦截写入字节数并回调进度
+                val totalBytes = multipartBody.contentLength()
+
                 val progressBody = object : RequestBody() {
                     override fun contentType() = multipartBody.contentType()
-                    override fun contentLength() = multipartBody.contentLength()
+                    override fun contentLength() = totalBytes
                     override fun writeTo(sink: BufferedSink) {
-                        // 包装拦截写入
                         val countingSink = object : ForwardingSink(sink) {
                             var bytesWritten = 0L
-                            val totalBytes = contentLength()
 
                             override fun write(source: Buffer, byteCount: Long) {
                                 super.write(source, byteCount)
                                 bytesWritten += byteCount
-                                onProgress(bytesWritten.toFloat() / totalBytes)
+                                onProgress(if (totalBytes > 0) (bytesWritten.toFloat() * 100 / totalBytes) else 0f)
                             }
                         }
 
@@ -135,7 +130,6 @@ class UploadViewModel(application: Application) : AndroidViewModel(application) 
                     }
                 }
 
-                // 3. 发起请求
                 val request = Request.Builder().url(url).post(progressBody).build()
 
                 client.newCall(request).execute().use { response ->
@@ -159,11 +153,24 @@ class UploadViewModel(application: Application) : AndroidViewModel(application) 
     }
 
 
-    fun showToast(message: String) {
+    private fun showToast(message: String) {
         viewModelScope.launch {
             withContext(Dispatchers.Main) {
                 Toast.makeText(getApplication(), message, Toast.LENGTH_SHORT).show()
             }
+        }
+    }
+
+    private fun calcFileListSize(): List<Long> {
+        val resolver = getApplication<Application>().contentResolver
+
+        return selectedFiles.map { uri ->
+            resolver.query(uri, null, null, null, null)?.use { cursor ->
+                if (cursor.moveToFirst()) {
+                    val sizeIndex = cursor.getColumnIndex(OpenableColumns.SIZE)
+                    if (sizeIndex != -1) cursor.getLong(sizeIndex) else -1L
+                } else -1L
+            } ?: -1L
         }
     }
 }

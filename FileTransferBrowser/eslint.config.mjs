@@ -14,5 +14,8 @@ export default defineConfig([
       quotes: ['error', 'single', { avoidEscape: true }],
       'comma-dangle': ['error', 'never']
     }
+  },
+  {
+    ignores: ['**/libs/**']
   }
 ]);

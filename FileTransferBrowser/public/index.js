@@ -128,14 +128,20 @@ async function uploadFiles() {
     spinner.className = 'spinner';
     statusEl.appendChild(spinner);
 
-    const response = await fetch(`http://${ipAddress}:${port}/upload`, {
-      method: 'POST',
-      body: formData
-    });
-    const {code} = await response.json();
+    // eslint-disable-next-line no-undef
+    const { data: { code, message } = {} } = await axios.post(
+      `http://${ipAddress}:${port}/upload`,
+      formData,
+      {
+        onUploadProgress: (progressEvent) => {
+          const percent = Math.round((progressEvent.loaded / progressEvent.total) * 100);
+          statusEl.textContent = `上传进度: ${percent}%`;
+        }
+      }
+    );
 
     if (code !== 200) {
-      statusEl.textContent = `上传失败: ${response.message}`;
+      statusEl.textContent = `上传失败: ${message}`;
       statusEl.className = 'status error';
       return;
     }
