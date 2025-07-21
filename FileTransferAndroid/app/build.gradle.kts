@@ -21,6 +21,13 @@ android {
     // 添加签名配置
     signingConfigs {
         create("release") {
+            println("签名配置 - 环境变量:")
+            println("RELEASE_STORE_FILE: ${System.getenv("RELEASE_STORE_FILE")}")
+            println(
+                "RELEASE_STORE_PASSWORD: ${System.getenv("RELEASE_STORE_PASSWORD")?.take(2)}..."
+            )
+            println("RELEASE_KEY_ALIAS: ${System.getenv("RELEASE_KEY_ALIAS")}")
+
             // 从环境变量获取签名信息，如果不存在则使用调试密钥
             storeFile = file(System.getenv("RELEASE_STORE_FILE") ?: File("debug.keystore"))
             storePassword = System.getenv("RELEASE_STORE_PASSWORD") ?: ""
