@@ -14,6 +14,3 @@
 .cxx
 local.properties
 /.kotlin
-
-app/build/**
-app/release/**
