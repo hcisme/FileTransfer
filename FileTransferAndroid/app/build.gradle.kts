@@ -21,22 +21,23 @@ android {
     // 添加签名配置
     signingConfigs {
         create("release") {
-            println("\n===== 签名配置调试信息 =====")
-            println("工作目录: ${System.getProperty("user.dir")}")
-            println("RELEASE_STORE_FILE: ${System.getenv("RELEASE_STORE_FILE")}")
-            println("RELEASE_STORE_PASSWORD: ${System.getenv("RELEASE_STORE_PASSWORD")?.take(2)}...")
-            println("RELEASE_KEY_ALIAS: ${System.getenv("RELEASE_KEY_ALIAS")}")
-
             val storePath = System.getenv("RELEASE_STORE_FILE") ?: "debug.keystore"
-            val storeFileObj = file(storePath)
-            println("密钥文件路径: ${storeFileObj.absolutePath}")
-            println("文件存在: ${storeFileObj.exists()}")
+            println("使用密钥文件: $storePath")
 
-            // 从环境变量获取签名信息，如果不存在则使用调试密钥
-            storeFile = file(System.getenv("RELEASE_STORE_FILE") ?: File("debug.keystore"))
+            storeFile = file(storePath)
             storePassword = System.getenv("RELEASE_STORE_PASSWORD") ?: ""
             keyAlias = System.getenv("RELEASE_KEY_ALIAS") ?: ""
             keyPassword = System.getenv("RELEASE_KEY_PASSWORD") ?: ""
+            
+            if (!storeFile.exists()) {
+                println("❌ 错误: 密钥文件不存在!")
+                println("当前路径: ${System.getProperty("user.dir")}")
+                println("文件路径: ${storeFile.absolutePath}")
+                println("目录内容:")
+                file(storeFile.parent).listFiles()?.forEach { println(" - ${it.name}") }
+            } else {
+                println("✅ 密钥文件存在")
+            }
         }
     }
 
