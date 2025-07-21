@@ -28,13 +28,13 @@ android {
             storePassword = System.getenv("RELEASE_STORE_PASSWORD") ?: ""
             keyAlias = System.getenv("RELEASE_KEY_ALIAS") ?: ""
             keyPassword = System.getenv("RELEASE_KEY_PASSWORD") ?: ""
-            
-            if (!storeFile.exists()) {
+
+            if (!storeFile!!.exists()) {
                 println("❌ 错误: 密钥文件不存在!")
                 println("当前路径: ${System.getProperty("user.dir")}")
-                println("文件路径: ${storeFile.absolutePath}")
+                println("文件路径: ${storeFile!!.absolutePath}")
                 println("目录内容:")
-                file(storeFile.parent).listFiles()?.forEach { println(" - ${it.name}") }
+                file(storeFile!!.parent).listFiles()?.forEach { println(" - ${it.name}") }
             } else {
                 println("✅ 密钥文件存在")
             }
