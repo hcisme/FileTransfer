@@ -74,3 +74,8 @@ jobs:
         with:
           files: FileTransferAndroid/app/build/outputs/apk/release/*.apk
           generate_release_notes: true
+          body: |
+            ### 本次更新内容
+            - 修复了构建签名路径问题
+            - 优化了 CI 工作流配置
+            - 更多详情请查看提交记录
