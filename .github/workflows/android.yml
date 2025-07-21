@@ -10,9 +10,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: FileTransferAndroid  # 指定你的Android项目目录
 
     steps:
     - name: Checkout code
@@ -31,36 +28,41 @@ jobs:
     # 还原签名密钥
     - name: Restore Keystore
       run: |
-        echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > app/release.keystore
+        echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > FileTransferAndroid/release.keystore
+        echo "密钥文件位置: $(pwd)/FileTransferAndroid/release.keystore"
+        ls -la FileTransferAndroid/
       env:
         KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
 
     # 设置签名环境变量
     - name: Setup signing variables
       run: |
-        echo "RELEASE_STORE_FILE=app/release.keystore" >> $GITHUB_ENV
+        echo "RELEASE_STORE_FILE=release.keystore" >> $GITHUB_ENV
         echo "RELEASE_STORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}" >> $GITHUB_ENV
         echo "RELEASE_KEY_ALIAS=${{ secrets.KEY_ALIAS }}" >> $GITHUB_ENV
         echo "RELEASE_KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}" >> $GITHUB_ENV
 
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
+      working-directory: FileTransferAndroid  # 指定工作目录
 
-    # 在 Build Release APK 步骤前添加
     - name: Verify keystore exists
       run: |
         echo "检查密钥文件是否存在..."
-        ls -la app/
-        if [ -f "app/release.keystore" ]; then
+        ls -la
+        if [ -f "release.keystore" ]; then
           echo "✅ 找到 release.keystore 文件"
-          echo "文件大小: $(du -h app/release.keystore | cut -f1)"
+          echo "文件大小: $(du -h release.keystore | cut -f1)"
         else
           echo "❌ 错误：release.keystore 文件不存在！"
+          ls -la
           exit 1
         fi
+      working-directory: FileTransferAndroid  # 指定工作目录
 
     - name: Build Release APK
       run: ./gradlew assembleRelease -stacktrace
+      working-directory: FileTransferAndroid  # 指定工作目录
       env:
         ORG_GRADLE_PROJECT_RELEASE_STORE_FILE: ${{ env.RELEASE_STORE_FILE }}
         ORG_GRADLE_PROJECT_RELEASE_STORE_PASSWORD: ${{ env.RELEASE_STORE_PASSWORD }}
@@ -72,5 +74,5 @@ jobs:
       uses: softprops/action-gh-release@v2
       if: startsWith(github.ref, 'refs/tags/')  # 仅在标签推送时执行
       with:
-        files: app/build/outputs/apk/release/*.apk
+        files: FileTransferAndroid/app/build/outputs/apk/release/*.apk
         generate_release_notes: true
