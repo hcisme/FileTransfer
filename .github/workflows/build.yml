@@ -42,6 +42,9 @@ jobs:
           echo "RELEASE_KEY_ALIAS=${{ secrets.KEY_ALIAS }}" >> $GITHUB_ENV
           echo "RELEASE_KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}" >> $GITHUB_ENV
 
+      - name: Grant execute permissions of gradlew
+        run: chmod +x FileTransferAndroid/gradlew
+
       - name: Build Android Release APK
         run: ./gradlew assembleRelease --stacktrace
         working-directory: FileTransferAndroid
@@ -113,7 +116,8 @@ jobs:
           tag_name: ${{ github.ref_name }}
           name: Release ${{ github.ref_name }}
           body: |
-            增加了node的构建
+            ### 本次更新内容
+            - 提升gradlew执行权限
           files: |
             artifacts/android/*.apk
             artifacts/node/filetransferbrowser.exe
