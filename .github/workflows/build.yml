@@ -132,19 +132,3 @@ jobs:
         run: |
           PREV_TAG=$(git describe --abbrev=0 --tags ${{ github.ref_name }}^ 2>/dev/null || echo "")
           echo "tag=${PREV_TAG:-v0.0.0}" >> $GITHUB_OUTPUT
-
-      - name: Delete Artifacts Immediately
-        run: |
-          # 删除本地副本
-          rm -rf artifacts
-
-          # 通过API删除远程工件
-          curl -X DELETE \
-            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-            -H "Accept: application/vnd.github.v3+json" \
-            "https://api.github.com/repos/${{ github.repository }}/actions/artifacts?name=android-apk"
-            
-          curl -X DELETE \
-            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-            -H "Accept: application/vnd.github.v3+json" \
-            "https://api.github.com/repos/${{ github.repository }}/actions/artifacts?name=node-exe"
