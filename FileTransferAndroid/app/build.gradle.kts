@@ -81,6 +81,7 @@ dependencies {
     implementation(libs.ktor.server.core.jvm)
     implementation(libs.ktor.server.cio.jvm)
     implementation(libs.ktor.server.cors.jvm)
+    implementation(libs.ktor.server.websockets.jvm)
     implementation(libs.okhttp)
     implementation(libs.storage)
 

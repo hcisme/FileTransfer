@@ -12,6 +12,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.chc.filetransferandroid.client.WebSocketClient
+import com.chc.filetransferandroid.utils.getLocalIpAddress
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -29,12 +31,35 @@ import org.json.JSONObject
 import java.net.Inet4Address
 import javax.jmdns.ServiceInfo
 
-class UploadViewModel(application: Application) : AndroidViewModel(application) {
+class UploadViewModel(application: Application) : AndroidViewModel(application),
+    WebSocketClient.ResponseListener {
     val client by lazy { OkHttpClient() }
+    val localIp by lazy { getApplication<Application>().getLocalIpAddress() }
     var selectedService by mutableStateOf<ServiceInfo?>(null)
     val selectedFiles = mutableStateListOf<Uri>()
     var isUploading by mutableStateOf(false)
     var uploadProgress by mutableFloatStateOf(0f)
+
+    override fun onTransferResponse(requestId: String, accepted: Boolean) {
+        if (accepted && requestId == localIp?.hostAddress) {
+            upload()
+        }
+    }
+
+    fun requestIsAllowUpload(wsClient: WebSocketClient) {
+        if (selectedService == null) {
+            showToast("请先选择服务")
+            return
+        }
+        if (selectedFiles.isEmpty()) {
+            showToast("请选择文件")
+            return
+        }
+        val service = selectedService!!
+        val ip = service.inetAddresses.firstOrNull { it is Inet4Address }?.hostAddress ?: return
+        val wsUrl = "ws://$ip:${service.port}/"
+        wsClient.init(wsUrl = wsUrl).sendMessage(requestId = localIp?.hostAddress ?: "未知")
+    }
 
     fun upload() {
         if (selectedService == null) {
@@ -47,7 +72,10 @@ class UploadViewModel(application: Application) : AndroidViewModel(application) 
         }
         isUploading = true
 
+        val service = selectedService!!
+        val ip = service.inetAddresses.firstOrNull { it is Inet4Address }?.hostAddress ?: return
         uploadFiles(
+            url = "http://$ip:${service.port}/upload",
             onProgress = { progress -> uploadProgress = "%.2f".format(progress).toFloat() },
             onComplete = { text ->
                 isUploading = false
@@ -59,13 +87,10 @@ class UploadViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     private fun uploadFiles(
+        url: String,
         onProgress: (progress: Float) -> Unit,
         onComplete: (message: String) -> Unit
     ) {
-        val service = selectedService!!
-        val ip = service.inetAddresses.firstOrNull { it is Inet4Address }?.hostAddress ?: return
-        val url = "http://$ip:${service.port}/upload"
-
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val resolver = getApplication<Application>().contentResolver

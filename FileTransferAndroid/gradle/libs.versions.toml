@@ -37,6 +37,7 @@ androidx-lifecycle-viewmodel-compose = { group = "androidx.lifecycle", name = "l
 ktor-server-core-jvm = { module = "io.ktor:ktor-server-core-jvm", version.ref = "ktorVersion" }
 ktor-server-cio-jvm = { module = "io.ktor:ktor-server-cio-jvm", version.ref = "ktorVersion" }
 ktor-server-cors-jvm = { module = "io.ktor:ktor-server-cors-jvm", version.ref = "ktorVersion" }
+ktor-server-websockets-jvm = { module = "io.ktor:ktor-server-websockets-jvm", version.ref = "ktorVersion" }
 okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
 storage = { module = "com.anggrayudi:storage", version.ref = "storage" }
 

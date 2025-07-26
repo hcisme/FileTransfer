@@ -76,7 +76,7 @@ class JmDNSDeviceDiscovery(private val context: Context) {
     fun startDiscoveryAndPublish() {
         scope.launch {
             try {
-                val localIp = getLocalIpAddress() ?: run {
+                val localIp = context.getLocalIpAddress() ?: run {
                     Log.e(TAG, "无法获取本地IP地址")
                     return@launch
                 }
@@ -138,18 +138,6 @@ class JmDNSDeviceDiscovery(private val context: Context) {
         }
     }
 
-    @RequiresPermission(Manifest.permission.ACCESS_NETWORK_STATE)
-    private fun getLocalIpAddress(): InetAddress? {
-        val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-        val network = cm.activeNetwork ?: return null
-
-        val linkProperties = cm.getLinkProperties(network)
-
-        return linkProperties?.linkAddresses?.firstOrNull { address ->
-            address.address is Inet4Address && !address.address.isLoopbackAddress
-        }?.address
-    }
-
     companion object {
         private const val TAG = "JmDNS"
         private const val JMDNS_NAME = "AndroidDevice"
@@ -160,4 +148,15 @@ class JmDNSDeviceDiscovery(private val context: Context) {
         private val SERVICE_NAME = "android-${Build.MODEL}-${Build.ID}"
         const val SERVICE_PORT = 8081
     }
+}
+
+fun Context.getLocalIpAddress(): InetAddress? {
+    val cm = this.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+    val network = cm.activeNetwork ?: return null
+
+    val linkProperties = cm.getLinkProperties(network)
+
+    return linkProperties?.linkAddresses?.firstOrNull { address ->
+        address.address is Inet4Address && !address.address.isLoopbackAddress
+    }?.address
 }

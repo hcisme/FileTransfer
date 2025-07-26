@@ -10,13 +10,16 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowInsetsControllerCompat
+import com.chc.filetransferandroid.client.WebSocketClient
 import com.chc.filetransferandroid.server.KtorServer
 import com.chc.filetransferandroid.ui.screen.UploadView
 import com.chc.filetransferandroid.ui.theme.FileTransferAndroidTheme
 import com.chc.filetransferandroid.utils.JmDNSDeviceDiscovery
+import com.chc.filetransferandroid.utils.LocalWsClient
 
 class MainActivity : ComponentActivity() {
     private lateinit var jm: JmDNSDeviceDiscovery
@@ -32,24 +35,26 @@ class MainActivity : ComponentActivity() {
             0
         )
 
-        ktorServer = KtorServer(applicationContext).apply {
-            start()
-        }
+        ktorServer = KtorServer(applicationContext).apply { start() }
 
-        jm = JmDNSDeviceDiscovery(this).apply {
-            startDiscoveryAndPublish()
-        }
+        jm = JmDNSDeviceDiscovery(this).apply { startDiscoveryAndPublish() }
+
+        val wsClient = WebSocketClient()
 
         setContent {
-            FileTransferAndroidTheme(
-                dynamicColor = false
+            CompositionLocalProvider(
+                LocalWsClient provides wsClient
             ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(MaterialTheme.colorScheme.background)
+                FileTransferAndroidTheme(
+                    dynamicColor = false
                 ) {
-                    UploadView(jm = jm)
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(MaterialTheme.colorScheme.background)
+                    ) {
+                        UploadView(jm = jm)
+                    }
                 }
             }
         }
