@@ -2,6 +2,10 @@
 let devices = [];
 // 当前选中的设备
 let selectedDevice = null;
+// 连接选中的ws连接
+let selectedDeviceSocket = null;
+// 本地ip
+let localIp = null;
 
 // DOM元素引用
 const statusEl = document.getElementById('status');
@@ -60,6 +64,7 @@ function renderDevices() {
 
     deviceCard.addEventListener('click', () => {
       selectedDevice = device;
+      connectSelectedDeviceWs();
       updateSelectedDeviceInfo();
       renderDevices();
     });
@@ -89,6 +94,19 @@ function updateSelectedDeviceInfo() {
 
   // 更新上传按钮状态
   uploadBtn.disabled = !selectedDevice;
+}
+
+function uploadRequest() {
+  if (!selectedDeviceSocket) {
+    return;
+  }
+
+  selectedDeviceSocket.send(
+    JSON.stringify({
+      type: 'transfer_request',
+      requestId: localIp
+    })
+  );
 }
 
 // 文件上传函数
@@ -157,5 +175,35 @@ async function uploadFiles() {
   }
 }
 
+async function getLocalIp() {
+  const response = await fetch('/getIp');
+  const data = await response.json();
+  localIp = data.ip;
+}
+
+function connectSelectedDeviceWs() {
+  selectedDeviceSocket?.close();
+  const selectedDeviceIp = selectedDevice?.referer?.address;
+  if (!selectedDeviceIp) {
+    return;
+  }
+  selectedDeviceSocket = new WebSocket(`ws://${selectedDeviceIp}:${selectedDevice.port}/`);
+
+  selectedDeviceSocket.addEventListener('message', async (event) => {
+    const { type, accepted } = JSON.parse(event.data);
+
+    if (type === 'transfer_response') {
+      if (accepted) {
+        alert(`设备（${selectedDeviceIp}）已接受文件传输请求`);
+        uploadFiles();
+      } else {
+        alert(`设备（${selectedDeviceIp}）拒绝了文件传输请求`);
+      }
+    }
+  });
+}
+
+// 获取局域网内ip
+getLocalIp();
 // 初始化页面时更新已选设备区域
 updateSelectedDeviceInfo();

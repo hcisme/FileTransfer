@@ -10,6 +10,9 @@ import okio.ByteString
 import org.json.JSONObject
 import java.util.concurrent.TimeUnit
 
+/**
+ * 选中的设备 和 浏览器端node服务 建立的 ws
+ */
 class WebSocketClient {
     private val client = OkHttpClient.Builder().pingInterval(15, TimeUnit.SECONDS).build()
     private var ws: WebSocket? = null

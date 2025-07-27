@@ -1,32 +1,29 @@
-package com.chc.filetransferandroid.server
+package com.chc.ktor_server.server
 
 import android.content.Context
-import com.chc.filetransferandroid.utils.JmDNSDeviceDiscovery
+import com.chc.ktor_server.server.config.configureRouting
+import com.chc.ktor_server.server.config.configureSockets
+import com.chc.ktor_server.utils.SERVICE_PORT
 import io.ktor.server.cio.CIO
 import io.ktor.server.engine.embeddedServer
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.launch
 
 class KtorServer(private val context: Context) {
-    private val serverScope = CoroutineScope(Dispatchers.IO)
 
     private val server by lazy {
-        embeddedServer(CIO, port = JmDNSDeviceDiscovery.SERVICE_PORT) {
+        embeddedServer(CIO, port = SERVICE_PORT) {
             configureRouting(context)
+            configureSockets(context)
         }
     }
 
     /** 启动服务器 */
     fun start() {
-        serverScope.launch { server.start(true) }
+        server.start(wait = false)
     }
 
     /** 停止服务器 */
     fun stop() {
         server.stop(1_000, 2_000)
-        serverScope.cancel()
     }
 
     companion object {

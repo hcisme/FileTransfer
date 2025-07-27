@@ -1,11 +1,10 @@
 package com.chc.filetransferandroid.utils
 
-import android.Manifest
 import android.content.Context
 import android.net.ConnectivityManager
 import android.os.Build
 import android.util.Log
-import androidx.annotation.RequiresPermission
+import com.chc.ktor_server.utils.SERVICE_PORT
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -146,7 +145,6 @@ class JmDNSDeviceDiscovery(private val context: Context) {
         // 发布服务相关信息
         private const val SERVICE_DESC = "platform-android"
         private val SERVICE_NAME = "android-${Build.MODEL}-${Build.ID}"
-        const val SERVICE_PORT = 8081
     }
 }
 

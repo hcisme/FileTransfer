@@ -15,11 +15,13 @@ import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowInsetsControllerCompat
 import com.chc.filetransferandroid.client.WebSocketClient
-import com.chc.filetransferandroid.server.KtorServer
+import com.chc.filetransferandroid.client.WebSocketServer
 import com.chc.filetransferandroid.ui.screen.UploadView
 import com.chc.filetransferandroid.ui.theme.FileTransferAndroidTheme
 import com.chc.filetransferandroid.utils.JmDNSDeviceDiscovery
 import com.chc.filetransferandroid.utils.LocalWsClient
+import com.chc.filetransferandroid.utils.LocalWsServer
+import com.chc.ktor_server.server.KtorServer
 
 class MainActivity : ComponentActivity() {
     private lateinit var jm: JmDNSDeviceDiscovery
@@ -36,14 +38,15 @@ class MainActivity : ComponentActivity() {
         )
 
         ktorServer = KtorServer(applicationContext).apply { start() }
-
         jm = JmDNSDeviceDiscovery(this).apply { startDiscoveryAndPublish() }
 
+        val wsServer = WebSocketServer()
         val wsClient = WebSocketClient()
 
         setContent {
             CompositionLocalProvider(
-                LocalWsClient provides wsClient
+                LocalWsClient provides wsClient,
+                LocalWsServer provides wsServer
             ) {
                 FileTransferAndroidTheme(
                     dynamicColor = false

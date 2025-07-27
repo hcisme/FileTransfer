@@ -78,12 +78,8 @@ dependencies {
     implementation(libs.androidx.core.splashscreen)
     implementation(libs.jmdns)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
-    implementation(libs.ktor.server.core.jvm)
-    implementation(libs.ktor.server.cio.jvm)
-    implementation(libs.ktor.server.cors.jvm)
-    implementation(libs.ktor.server.websockets.jvm)
     implementation(libs.okhttp)
-    implementation(libs.storage)
+    implementation(project(":ktor-server"))
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

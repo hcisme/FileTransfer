@@ -34,4 +34,8 @@ module.exports = (app) => {
   app.get('/list', (req, res) => {
     res.json(discoveredServices);
   });
+
+  app.get('/getIp', (req, res) => {
+    res.json({ ip: selfIP });
+  });
 };

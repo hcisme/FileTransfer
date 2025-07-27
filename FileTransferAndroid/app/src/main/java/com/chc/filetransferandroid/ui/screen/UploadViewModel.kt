@@ -13,15 +13,19 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.chc.filetransferandroid.client.WebSocketClient
+import com.chc.filetransferandroid.client.WebSocketServer
 import com.chc.filetransferandroid.utils.getLocalIpAddress
+import com.chc.ktor_server.utils.SERVICE_PORT
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import okio.Buffer
 import okio.BufferedSink
 import okio.ForwardingSink
@@ -32,18 +36,26 @@ import java.net.Inet4Address
 import javax.jmdns.ServiceInfo
 
 class UploadViewModel(application: Application) : AndroidViewModel(application),
-    WebSocketClient.ResponseListener {
+    WebSocketClient.ResponseListener,
+    WebSocketServer.RequestListener {
     val client by lazy { OkHttpClient() }
     val localIp by lazy { getApplication<Application>().getLocalIpAddress() }
     var selectedService by mutableStateOf<ServiceInfo?>(null)
     val selectedFiles = mutableStateListOf<Uri>()
     var isUploading by mutableStateOf(false)
+    var isAllowTransfer by mutableStateOf(false)
+    var requestId by mutableStateOf("")
     var uploadProgress by mutableFloatStateOf(0f)
 
     override fun onTransferResponse(requestId: String, accepted: Boolean) {
         if (accepted && requestId == localIp?.hostAddress) {
             upload()
         }
+    }
+
+    override fun onTransferRequest(requestId: String) {
+        this.requestId = requestId
+        isAllowTransfer = true
     }
 
     fun requestIsAllowUpload(wsClient: WebSocketClient) {
@@ -81,6 +93,7 @@ class UploadViewModel(application: Application) : AndroidViewModel(application),
                 isUploading = false
                 uploadProgress = 0f
                 selectedFiles.clear()
+                requestId = ""
                 showToast(text)
             }
         )
@@ -177,8 +190,7 @@ class UploadViewModel(application: Application) : AndroidViewModel(application),
         }
     }
 
-
-    private fun showToast(message: String) {
+    fun showToast(message: String) {
         viewModelScope.launch {
             withContext(Dispatchers.Main) {
                 Toast.makeText(getApplication(), message, Toast.LENGTH_SHORT).show()
@@ -196,6 +208,24 @@ class UploadViewModel(application: Application) : AndroidViewModel(application),
                     if (sizeIndex != -1) cursor.getLong(sizeIndex) else -1L
                 } else -1L
             } ?: -1L
+        }
+    }
+
+    fun agreeRequest(accepted: Boolean) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val json = JSONObject().apply {
+                put("requestId", requestId)
+                put("accepted", accepted)
+            }
+
+            val requestBody = json.toString().toRequestBody("application/json".toMediaType())
+
+            val request = Request.Builder()
+                .url("http://127.0.0.1:${SERVICE_PORT}/api/transfer/response")
+                .post(requestBody)
+                .build()
+
+            client.newCall(request).execute()
         }
     }
 }

@@ -23,3 +23,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "FileTransferAndroid"
 include(":app")
+include(":ktor-server")

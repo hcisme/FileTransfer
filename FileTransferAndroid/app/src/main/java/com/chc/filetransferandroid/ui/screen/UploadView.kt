@@ -32,13 +32,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.chc.filetransferandroid.components.Dialog
 import com.chc.filetransferandroid.utils.JmDNSDeviceDiscovery
 import com.chc.filetransferandroid.utils.LocalWsClient
+import com.chc.filetransferandroid.utils.LocalWsServer
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UploadView(jm: JmDNSDeviceDiscovery, modifier: Modifier = Modifier) {
     val uploadViewModel = viewModel<UploadViewModel>()
+    LocalWsServer.current.apply { setRequestListener(uploadViewModel) }
     val wsClient = LocalWsClient.current.apply { setResponseListener(uploadViewModel) }
     val deviceList by jm.discoveredDevices.collectAsState()
     val filePicker = rememberLauncherForActivityResult(
@@ -135,5 +138,24 @@ fun UploadView(jm: JmDNSDeviceDiscovery, modifier: Modifier = Modifier) {
                 )
             }
         }
+    }
+
+    Dialog(
+        visible = uploadViewModel.isAllowTransfer,
+        confirmButtonText = "确定",
+        cancelButtonText = "取消",
+        onConfirm = {
+            uploadViewModel.isAllowTransfer = false
+            // http 发送到 本地服务
+            uploadViewModel.agreeRequest(true)
+            uploadViewModel.showToast("已同意传输")
+        },
+        onDismissRequest = {
+            uploadViewModel.isAllowTransfer = false
+            uploadViewModel.agreeRequest(false)
+            uploadViewModel.showToast("已拒绝传输")
+        }
+    ) {
+        Text("是否接受来自（${uploadViewModel.requestId}）的文件传输")
     }
 }

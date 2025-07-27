@@ -18,18 +18,20 @@ module.exports = ({ wss, app }) => {
 
   wss.on('connection', (ws) => {
     ws.on('message', (data) => {
+      console.log(JSON.parse(data));
+
       try {
         const { type, requestId } = JSON.parse(data);
-        if (type === 'transfer_request') {
-          // 存储请求信息
-          transferRequests.set(requestId, { ws, timestamp: Date.now() });
+        switch (type) {
+          case 'transfer_request':
+            // 存储请求信息
+            transferRequests.set(requestId, { ws, timestamp: Date.now() });
 
-          // 广播给浏览器客户端
-          wss.clients.forEach((client) => {
-            const clientIp = client._socket.address().address;
+            // 广播给浏览器客户端
+            wss.clients.forEach((client) => {
+              const clientIp = client._socket.address().address;
 
-            if (clientIp.includes('127.0.0.1')) {
-              if (client.readyState === WebSocket.OPEN) {
+              if (clientIp.includes('127.0.0.1') && client.readyState === WebSocket.OPEN) {
                 client.send(
                   JSON.stringify({
                     type: 'transfer_request',
@@ -37,8 +39,10 @@ module.exports = ({ wss, app }) => {
                   })
                 );
               }
-            }
-          });
+            });
+            break;
+          default:
+            break;
         }
       } catch (e) {
         console.error('WebSocket error:', e);
@@ -56,6 +60,7 @@ module.exports = ({ wss, app }) => {
   });
 
   // 浏览器的接口 用ws发送到android
+  // 表示浏览器接受了文件上传
   app.post('/api/transfer/response', (req, res) => {
     const { requestId, accepted } = req.body;
 
@@ -78,7 +83,7 @@ module.exports = ({ wss, app }) => {
       res.send({ code: 200, message: '响应已发送' });
     } catch (e) {
       console.error('转发到android失败:', e);
-      res.send({ code: 500 , message: '转发失败' });
+      res.send({ code: 500, message: '转发失败' });
     }
   });
 };
